@@ -5,6 +5,8 @@ plus: .ascii "+"
 minus: .acsii "-"
 multi: .ascii "*"
 divid: .ascii "/"
+msg: .fill 10, 1, 0
+msg_len: quad msg_len - msg
 
 .section .bss
 .lcomm temp_res, 8
@@ -14,7 +16,67 @@ divid: .ascii "/"
 
 .global	calc_expr
 calc_expr:
-	#YOU NEED TO FILL THIS
+	#calc_expr callee epilogue{
+	pushq %rbp #save old rbp
+	movq %rsp, %rbp # move rbp to top 
+	# Save callee-save registers
+	pushq %rbx 	#-64(%rsp) not 24
+	pushq %rsi 	#-56(%rsp) not 16
+	pushq %rdi 	#-48(%rsp) not 8
+	pushq %rcx	#-40(%rsp)
+	pushq %r8	#-32(%rsp)
+	pushq %r9	#-24(%rsp)
+	pushq %r10 	#-16(%rsp)
+	pushq %r11 	#-8(%rsp)
+#}
+
+	xor %rbx, %rbx #long long res;
+	
+#syscall (read) caller epilogue{
+	movq $0, %rax #read
+	movq $0, %rdi #stdin
+	movq $msg, %rsi
+	movq $??, %rdx #TBD: what is the expr max_size? maybe should read expr in a loop... 
+#}
+	syscall
+
+#syscall caller prologue {}
+
+#calc_rec caller epilogue{
+	movq $msg, %rdi
+	movq %rax, %rsi
+	movq -8(%rsp), %rdx 
+#}
+	call calc_rec
+
+#calc_rec caller prologue {}
+
+	
+#result_as_string caller epilogue{
+	movq %rax, %rdi
+#}
+	call* -16(%rsp) #call result_as_string
+#result_as_string caller prologue{}
+
+#syscall (write) caller epilogue{
+	movq $1, %rax #write
+	movq $1, %rdi #stdout
+	movq $??, %rsi #TBD: change adress to be what_to_print. should we add "what_to_print" in the bss section?
+	movq ???, %rdx #TBD: change this adress to be len(what_to_print)
+#}
+	syscall
+
+#calc_expr callee prologue{
+	pushq %r11 	
+	pushq %r10 	
+	pushq %r9	
+	pushq %r8	
+	pushq %rcx		
+	popq %rdi
+	popq %rsi
+	popq %rbx
+	popq %rbp
+#}
 	ret
 
 
