@@ -21,7 +21,7 @@ calc_expr:
 calc_rec: #rdi = *str, rsi = len
 	#prologue
 	pushq %rbp
-	movq %rbp, %rsp
+	movq %rsp, %rbp
 	
 	mov $0, (diff) #diff =0
 	mov $-1, %rcx #rcx = i =-1
