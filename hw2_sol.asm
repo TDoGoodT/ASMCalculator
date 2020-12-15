@@ -5,47 +5,50 @@ plus: .ascii "+"
 minus: .acsii "-"
 multi: .ascii "*"
 divid: .ascii "/"
+EON: .ascii "\n"
 msg: .fill 10, 1, 0
 msg_len: quad msg_len - msg
 
 .section .bss
 .lcomm temp_res, 8
 .lcomm diff, 4
+.lcomm string_convert, 8
+.lcomm result_as_string, 8
 
 .section .text
 
 .global	calc_expr
 calc_expr:
-	#calc_expr callee epilogue{
+#calc_expr callee epilogue{
 	pushq %rbp #save old rbp
 	movq %rsp, %rbp # move rbp to top 
 	# Save callee-save registers
-	pushq %rbx 	#-64(%rsp) not 24
-	pushq %rsi 	#-56(%rsp) not 16
-	pushq %rdi 	#-48(%rsp) not 8
+	pushq %rbx 	#-64(%rsp) 
+	pushq %rsi 	#-56(%rsp) 
+	pushq %rdi 	#-48(%rsp) 
 	pushq %rcx	#-40(%rsp)
 	pushq %r8	#-32(%rsp)
 	pushq %r9	#-24(%rsp)
 	pushq %r10 	#-16(%rsp)
 	pushq %r11 	#-8(%rsp)
+	movq %rdi, string_convert
+	movq %rsi, result_as_string
+	movq %rsp, %r10
 #}
 
 	xor %rbx, %rbx #long long res;
 	
-#syscall (read) caller epilogue{
-	movq $0, %rax #read
-	movq $0, %rdi #stdin
-	movq $msg, %rsi
-	movq $??, %rdx #TBD: what is the expr max_size? maybe should read expr in a loop... 
-#}
-	syscall
+#read_line caller epilogue{}
+	
+	call read_line
 
-#syscall caller prologue {}
+#read_line caller prologue {}
 
 #calc_rec caller epilogue{
-	movq $msg, %rdi
-	movq %rax, %rsi
-	movq -8(%rsp), %rdx 
+	movq %r10, %rdi
+	subq %rsp, %r10 #len(str) -> %r10
+	movq %r10, %rsi # %rsi = len(str)
+	movq $string_convert, %rdx 
 #}
 	call calc_rec
 
@@ -55,14 +58,15 @@ calc_expr:
 #result_as_string caller epilogue{
 	movq %rax, %rdi
 #}
-	call* -16(%rsp) #call result_as_string
+	call $result_as_string
 #result_as_string caller prologue{}
 
 #syscall (write) caller epilogue{
+	movq %rax, %rdx # %rax <- len(what_to_print)
 	movq $1, %rax #write
 	movq $1, %rdi #stdout
-	movq $??, %rsi #TBD: change adress to be what_to_print. should we add "what_to_print" in the bss section?
-	movq ???, %rdx #TBD: change this adress to be len(what_to_print)
+	movq (what_to_print), %rsi 
+	
 #}
 	syscall
 
@@ -77,8 +81,54 @@ calc_expr:
 	popq %rbx
 	popq %rbp
 #}
+	leave
 	ret
 
+read_line:
+#read_line callee epilogue{
+	pushq %rbp #save old rbp
+	movq %rsp, %rbp # move rbp to top 
+	# Save callee-save registers
+	pushq %rbx 	#-64(%rsp) 
+	pushq %rsi 	#-56(%rsp) 
+	pushq %rdi 	#-48(%rsp) 
+	pushq %rcx	#-40(%rsp)
+	pushq %r8	#-32(%rsp)
+	pushq %r9	#-24(%rsp)
+	pushq %r10 	#-16(%rsp)
+	pushq %r11 	#-8(%rsp)
+#}
+	movq %rsp, %r11 #char* tmp = current_stack_pointer
+#syscall (read) caller epilogue{
+	movq $0, %rax #read
+	movq $0, %rdi #stdin
+	movq $1, %rdx #read char by char
+#}
+
+read_char:
+	movq %rsp, %rsi 
+	syscall	
+	dec %rsp 
+	movq (%rsi), %r11
+	cmp (EON), %r11
+	je read_end
+	jmp read_char
+read_end:
+#syscall caller prologue {}
+
+#read_line callee prologue{
+	pushq %r11 	
+	pushq %r10 	
+	pushq %r9	
+	pushq %r8	
+	pushq %rcx		
+	popq %rdi
+	popq %rsi
+	popq %rbx
+	popq %rbp
+#}
+	ret
+	
 
 calc_rec: #rdi = *str, rsi = len
 	#prologue

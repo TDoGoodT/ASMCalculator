@@ -8,7 +8,7 @@ void calc_expr(long long (*string_convert)(char*), int (*result_as_string)(long 
     char * in_str;
     long long res;
     scanf("%s", in_str);
-    res = calc_res(in_str, len(in_str, string_convert));
+    res = calc_rec(in_str, len(in_str), string_convert);
     result_as_string(res);
 }
 
