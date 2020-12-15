@@ -6,7 +6,7 @@ minus: .ascii "-"
 multi: .ascii "*"
 divid: .ascii "/"
 EON: .ascii "\n"
-string_to_convet: .zero 30
+string_to_convert: .zero 30
 
 .section .bss
 .lcomm temp_res, 8
@@ -146,12 +146,13 @@ calc_rec: #rdi = *str, rsi = len
 		imul $-1, %rcx, %rcx
 
 		cmp %al, (open_paren) #if curr == '(' diff ++
-		je diff++
+		je diff_pp
 		cmp %al, (close_paren) #if curr == ')' diff --
-		je diff--
+		je diff_mm
 		
 		check_char:
-			cmp (diff), $1 #if diff == 1)
+			movl $1, %r8d
+			cmpl (diff), %r8d #if diff == 1)
 			jne main_loop
 			
 			cmp %al, (plus)
@@ -214,13 +215,13 @@ calc_rec: #rdi = *str, rsi = len
 			ret
 
 
-diff++: 
-	inc (diff)
+diff_pp: 
+	incl (diff)
 	jmp main_loop
 
 
-diff--:
-	dec (diff)
+diff_mm:
+	decl (diff)
 	jmp main_loop
 
 add_op:
@@ -496,7 +497,7 @@ div_op:
 
 	call calc_rec
 	
-	mov %rax, (temp_res) #temp_res = right
+	mov %rax, (temp_res) #temp_res = left
 
 	#post call
 	popq %r11
@@ -512,7 +513,7 @@ div_op:
 	mov %r9, %rcx  #i=i
 	mov %r10, %rsi #len = len
 	mov %r11, %rax #rax = left
-	div %rax, (temp_res) #rax = left\right
+	divq (temp_res) #rax = left\right
 
 	#epilogue
 	leave
@@ -527,11 +528,14 @@ create_string:
 	inner_loop:
 		cmp %rcx, %rsi
 		jg use_string_convert
-		leaq (string_to_convet, %rcx, 1), %r9
+		movq $string_to_convert, %r10
+		leaq (%r10, %rcx, 1), %r9
 
 		imul $-1, %rcx, %rcx
 
-		movb (%rdi, %rcx, 1), (%r9) #curr = str[i]
+		movb (%rdi, %rcx, 1), %al #curr = str[i]
+		
+		movb %al, (%r9)
 
 		imul $-1, %rcx, %rcx
 
@@ -540,12 +544,14 @@ create_string:
 		jmp inner_loop
 		
 delete_string:
+	movq $30, %r8
 	xor %rcx, %rcx
 	
-	inner_loop:
-		cmp %rcx, $30
+	del_inner_loop:
+		movq $string_to_convert, %r10
+		cmp %rcx, %r8
 		jg after_string_convert
-		movb $0, (string_to_convert, %rcx, 1)
+		movb $0, (%r10, %rcx, 1)
 		inc %rcx
-		jmp inner_loop
+		jmp del_inner_loop
 
