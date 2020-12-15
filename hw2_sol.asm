@@ -36,19 +36,31 @@ calc_expr:
 #}
 
 	xor %rbx, %rbx #long long res;
+		
+	movq %rsp, %r11 #char* tmp = current_stack_pointer
+read_char:
+#syscall (read) caller epilogue{
+	movq $0, %rax #read
+	movq $0, %rdi #stdin
+	movq $1, %rdx #read char by char
+#}
+	movq %rsp, %rsi 
+	dec %rsp 
+	syscall	
 	
-#read_line caller epilogue{}
-	
-	call read_line
-
-#read_line caller prologue {}
+	movb (%rsi), %r11b
+	cmpb (EON), %r11b
+	jne read_char
+	inc %rsp
 
 #calc_rec caller epilogue{
 	movq %r10, %rdi
 	subq %rsp, %r10 #len(str) -> %r10
 	movq %r10, %rsi # %rsi = len(str)
+	inc %rsi
 	movq $string_convert, %rdx 
 #}
+
 	call calc_rec
 
 #calc_rec caller prologue {}
@@ -70,67 +82,21 @@ calc_expr:
 	syscall
 
 #calc_expr callee prologue{
-	pushq %r11 	
-	pushq %r10 	
-	pushq %r9	
-	pushq %r8	
-	pushq %rcx		
+	popq %r11 	
+	popq %r10 	
+	popq %r9	
+	popq %r8	
+	popq %rcx		
 	popq %rdi
 	popq %rsi
 	popq %rbx
-	popq %rbp
 #}
 	leave
 	ret
 
-read_line:
-#read_line callee epilogue{
-	pushq %rbp #save old rbp
-	movq %rsp, %rbp # move rbp to top 
-	# Save callee-save registers
-	pushq %rbx 	#-64(%rsp) 
-	pushq %rsi 	#-56(%rsp) 
-	pushq %rdi 	#-48(%rsp) 
-	pushq %rcx	#-40(%rsp)
-	pushq %r8	#-32(%rsp)
-	pushq %r9	#-24(%rsp)
-	pushq %r10 	#-16(%rsp)
-	pushq %r11 	#-8(%rsp)
-#}
-	movq %rsp, %r11 #char* tmp = current_stack_pointer
-#syscall (read) caller epilogue{
-	movq $0, %rax #read
-	movq $0, %rdi #stdin
-	movq $1, %rdx #read char by char
-#}
-
-read_char:
-	movq %rsp, %rsi 
-	syscall	
-	dec %rsp 
-	movq (%rsi), %r11
-	cmp (EON), %r11
-	je read_end
-	jmp read_char
-read_end:
-#syscall caller prologue {}
-
-#read_line callee prologue{
-	pushq %r11 	
-	pushq %r10 	
-	pushq %r9	
-	pushq %r8	
-	pushq %rcx		
-	popq %rdi
-	popq %rsi
-	popq %rbx
-	popq %rbp
-#}
-	ret
-	
-
 calc_rec: #rdi = *str, rsi = len
 	#prologue
+
 	pushq %rbp
 	movq %rsp, %rbp
 	
@@ -167,13 +133,16 @@ calc_rec: #rdi = *str, rsi = len
 			cmp %al, (divid)
 			je div_op
 
-			cmp %rcx, %rsi
+			cmp %rsi, %rcx
 			jle main_loop
 
 		after_loop:
+			xor %rcx, %rcx
+			movb (%rdi, %rcx, 1), %al
 			cmpb %al, (open_paren)
 			je remove_parenthesis
 
+after_remove_parenthesis:
 			#pre call
 			pushq %rax
 			pushq %rdi
@@ -522,6 +491,8 @@ div_op:
 remove_parenthesis:
 	inc %rdi
 	dec %rsi
+	dec %rsi
+	jmp after_remove_parenthesis
 
 create_string:
 	xor %rcx, %rcx
