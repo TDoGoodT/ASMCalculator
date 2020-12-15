@@ -2,7 +2,7 @@
 open_paren: .ascii "("
 close_paren: .ascii ")"
 plus: .ascii "+"
-minus: .acsii "-"
+minus: .ascii "-"
 multi: .ascii "*"
 divid: .ascii "/"
 EON: .ascii "\n"
@@ -134,24 +134,16 @@ calc_rec: #rdi = *str, rsi = len
 	pushq %rbp
 	movq %rsp, %rbp
 	
-	mov $0, (diff) #diff =0
+	movl $0, (diff) #diff =0
 	mov $-1, %rcx #rcx = i =-1
 	main_loop:
 		inc %rcx
 
-		pushq %rax
-		movq %rcx,%rax
-		mul $-1
-		movq %rax, %rcx
-		popq %rax
+		imul $-1, %rcx, %rcx
 
 		movb (%rdi, %rcx, 1), %al #curr = str[i]
 
-		push %rax
-		movq %rcx, %rax
-		mul $-1
-		movq %rax, %rcx
-		popq %rax
+		imul $-1, %rcx, %rcx
 
 		cmp %al, (open_paren) #if curr == '(' diff ++
 		je diff++
@@ -537,19 +529,11 @@ create_string:
 		jg use_string_convert
 		leaq (string_to_convet, %rcx, 1), %r9
 
-		pushq %rax
-		movq %rcx,%rax
-		mul $-1
-		movq %rax, %rcx
-		popq %rax
+		imul $-1, %rcx, %rcx
 
 		movb (%rdi, %rcx, 1), (%r9) #curr = str[i]
 
-		push %rax
-		movq %rcx, %rax
-		mul $-1
-		movq %rax, %rcx
-		popq %rax
+		imul $-1, %rcx, %rcx
 
 		inc %rcx
 
