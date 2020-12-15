@@ -6,8 +6,7 @@ minus: .acsii "-"
 multi: .ascii "*"
 divid: .ascii "/"
 EON: .ascii "\n"
-msg: .fill 10, 1, 0
-msg_len: quad msg_len - msg
+string_to_convet: .zero 30
 
 .section .bss
 .lcomm temp_res, 8
@@ -58,7 +57,7 @@ calc_expr:
 #result_as_string caller epilogue{
 	movq %rax, %rdi
 #}
-	call $result_as_string
+	call result_as_string
 #result_as_string caller prologue{}
 
 #syscall (write) caller epilogue{
@@ -139,7 +138,21 @@ calc_rec: #rdi = *str, rsi = len
 	mov $-1, %rcx #rcx = i =-1
 	main_loop:
 		inc %rcx
+
+		pushq %rax
+		movq %rcx,%rax
+		mul $-1
+		movq %rax, %rcx
+		popq %rax
+
 		movb (%rdi, %rcx, 1), %al #curr = str[i]
+
+		push %rax
+		movq %rcx, %rax
+		mul $-1
+		movq %rax, %rcx
+		popq %rax
+
 		cmp %al, (open_paren) #if curr == '(' diff ++
 		je diff++
 		cmp %al, (close_paren) #if curr == ')' diff --
@@ -165,7 +178,7 @@ calc_rec: #rdi = *str, rsi = len
 			jle main_loop
 
 		after_loop:
-			cmp %al, (open_paren)
+			cmpb %al, (open_paren)
 			je remove_parenthesis
 
 			#pre call
@@ -178,9 +191,19 @@ calc_rec: #rdi = *str, rsi = len
 			pushq %r10
 			pushq %r11
 
+			jmp create_string
+			
+		use_string_convert:	
+
+			movq $string_to_convert, %rdi	
+
 			call string_convert
 
 			mov %rax, (temp_res)
+
+			jmp delete_string
+
+		after_string_convert:
 
 			#post call
 			popq %r11
@@ -201,12 +224,12 @@ calc_rec: #rdi = *str, rsi = len
 
 diff++: 
 	inc (diff)
-	jmp check_char
+	jmp main_loop
 
 
 diff--:
 	dec (diff)
-	jmp check_char
+	jmp main_loop
 
 add_op:
 	mov %rdi, %r8   #str = temp_str = r8
@@ -506,4 +529,39 @@ div_op:
 remove_parenthesis:
 	inc %rdi
 	dec %rsi
+
+create_string:
+	xor %rcx, %rcx
+	inner_loop:
+		cmp %rcx, %rsi
+		jg use_string_convert
+		leaq (string_to_convet, %rcx, 1), %r9
+
+		pushq %rax
+		movq %rcx,%rax
+		mul $-1
+		movq %rax, %rcx
+		popq %rax
+
+		movb (%rdi, %rcx, 1), (%r9) #curr = str[i]
+
+		push %rax
+		movq %rcx, %rax
+		mul $-1
+		movq %rax, %rcx
+		popq %rax
+
+		inc %rcx
+
+		jmp inner_loop
+		
+delete_string:
+	xor %rcx, %rcx
+	
+	inner_loop:
+		cmp %rcx, $30
+		jg after_string_convert
+		movb $0, (string_to_convert, %rcx, 1)
+		inc %rcx
+		jmp inner_loop
 
