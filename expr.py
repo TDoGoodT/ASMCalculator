@@ -5,8 +5,8 @@ def expr(depth):
         return random.choice(['', '-']) + str(int(random.choice(range(1,999))))
     exp1 =  expr(depth-1)
     exp2 = expr(depth-1)
-    #if eval(exp1) % eval(exp2) == 0:
-    #    return  '(' + exp1 + '/' + exp2 + ')'
+    if eval(exp1) % eval(exp2) == 0:
+        return  '(' + exp1 + '/' + exp2 + ')'
     return '(' + exp1 + random.choice(['+','-','*']) + exp2 + ')'
     
 expr_num = int(input('Enter amount of expressions you want: '))
