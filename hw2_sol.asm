@@ -133,7 +133,7 @@ calc_rec: #rdi = *str, rsi = len
 			je div_op
 		main_loop_end:
 			cmp %rsi, %rcx
-			jle main_loop
+			jl main_loop
 
 		after_loop:
 			xor %rcx, %rcx
@@ -297,7 +297,7 @@ minus_op:
 
 	cmp %al, (open_paren)
 	je main_loop
-
+	
 	mov %rdi, %r8   #str = temp_str = r8
 	dec %rdi	#str +1
 	mov %rcx, %r9	#i = temp_i = r9
@@ -512,10 +512,29 @@ div_op:
 	mov %r11, %rax #rax = left
 
 	pushq %rdx
+	pushq %rbx
+	pushq %r8
 
 	xor %rdx, %rdx
-	divq (temp_res) #rax = left\right
+	movq $1, %r8
+	movq (temp_res), %rbx
+DEBUG_DIV:
+	cmp %rdx, %rax
+	jge check_denom
+	imul $-1, %rax, %rax
+	imul $-1, %r8, %r8
+check_denom:
+	cmp %rdx, %rbx
+	jge div_abs
+	imul $-1, %rbx, %rbx
+	imul $-1, %r8, %r8
+div_abs:
+	divq %rbx #rax = left\right
+	mulq %r8
 
+post_div:
+	popq %r8
+	popq %rbx
 	popq %rdx
 
 	#epilogue
