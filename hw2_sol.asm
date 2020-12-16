@@ -136,8 +136,7 @@ calc_rec: #rdi = *str, rsi = len
 			jl main_loop
 
 		after_loop:
-			xor %rcx, %rcx
-			movb (%rdi, %rcx, 1), %al
+			movb (%rdi), %al
 			cmpb %al, (open_paren)
 			je remove_parenthesis
 
@@ -574,7 +573,7 @@ delete_string:
 	
 	del_inner_loop:
 		movq $string_to_convert, %r10
-		cmp %rcx, %r8
+		cmp %r8, %rcx
 		jg after_string_convert
 		movb $0, (%r10, %rcx, 1)
 		inc %rcx
