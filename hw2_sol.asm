@@ -531,7 +531,6 @@ div_abs:
 	divq %rbx #rax = left\right
 	mulq %r8
 
-post_div:
 	popq %r8
 	popq %rbx
 	popq %rdx

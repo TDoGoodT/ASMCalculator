@@ -22,7 +22,7 @@ my_de_handler:
 	jne end
 	
 	call *old_de_handler #get old handler response
-	
+	movq $1, %rbx
 	end:
 		popq %r8
 		popq %rdi
