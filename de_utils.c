@@ -2,11 +2,9 @@
 
 void my_store_idt(struct desc_ptr *idtr) {
 //# <STUDENT FILL>
-	asm volatile("movq %%idtr, %%rdi;"
-	"leave;"
-	"ret;"
+	asm volatile("sidt (%0);"
 	:
-	:
+	:"g" (idtr)
 	:
 	);
 	// TODO: if we omit inline assembly:  store_idt(&tmpidtr);
@@ -15,11 +13,9 @@ void my_store_idt(struct desc_ptr *idtr) {
 
 void my_load_idt(struct desc_ptr *idtr) {
 // <STUDENT FILL>
-	asm volatile("movq %%rdi, %%idtr;"
-	"leave;"
-	"ret;"
+	asm volatile("lidt (%0);"
 	:
-	:
+	:"g" (idtr)
 	:
 	);
 	// if we omit inline assembly: load_idt(addr);
@@ -28,37 +24,42 @@ void my_load_idt(struct desc_ptr *idtr) {
 
 void my_set_gate_offset(gate_desc *gate, unsigned long addr) {
 // <STUDENT FILL>
-//*gate = rdi addr =rsi
-	asm volatile("pushq %%rax;"
-	"movq %%rsi, %%rax;"
-	"movw %%ax, (%%rdi);"
-	"shrq %16, %%rax;"
-	"movw %%ax, 6(%%rdi);"
-	"shrq %15, %%rax;"
-	"movl %%eax, 8(%%rdi);"
-	"popq %%rax;"
-	
-	"leave;"
-	"ret;"
+
+	asm volatile(
+	"movq %0, %%rax;"
+	"movq %1, %%rbx;"
+	"movw %%bx, (%%rax);"
+	"shrq $16, %%rbx;"
+	"movw %%bx, 6(%%rax);"
+	"shrq $16, %%rbx;"
+	"movl %%ebx, 8(%%rax);"
 	:
-	:
-	:
+	: "r" (gate), "r" (addr)
+	:"%rax", "%rbx"
 	);
 	
-	// TODO: pack_gate(gate, GATE_INTERRUPT, addr, 0, 0, __KERNEL_CS);
+	//pack_gate(gate, GATE_INTERRUPT, addr, 0, 0, __KERNEL_CS);
 // </STUDENT FILL>
 }
 
 unsigned long my_get_gate_offset(gate_desc *gate) {
 // <STUDENT FILL>
-	asm volatile("movq %%rdi, %%rax;"
-	"sub %%idtr, %%rax;"
-	"leave;"
-	"ret;"
-	:
-	:
-	:
+
+	unsigned long addr;
+	asm volatile(
+	"movq %1, %%rbx;"
+	"movl 8(%%rbx), %%eax;"
+	"salq $16, %%rax;"
+	"movw 6(%%rbx), %%ax;"
+	"salq $16, %%rax;"
+	"movw (%%rbx), %%ax;"
+	"movq %%rax, %0;"
+	:"=r" (addr)
+	:"r" (gate)
+	:"%rax","%rbx"
 	);
-	// TODO: return gate_offset(gate);
+	return addr;
+	
+	//return gate_offset(gate);
 // </STUDENT FILL>
 }

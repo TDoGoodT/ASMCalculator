@@ -3,31 +3,74 @@
 
 .data
 
+.bss
+.lcomm temp_res, 8
+
+
 .text
 .align 4, 0x90
 my_de_handler:
   #STUDENT NEED TO FILL
-	pushq %rbp #save old rbp
-	movq %rsp, %rbp # move rbp to top
+  
 	
+	pushq %rax
 	pushq %rdi
+	pushq %rsi
+	pushq %rdx
+	pushq %rcx
 	pushq %r8
+	pushq %r9
+	pushq %r10
+	pushq %r11
+	pushfq
 	
-	movq %rax, %rdi #sends the divisor to teh first argument
+	xor %r8, %r8
 	
-	call *what_to_do #get handler response
-	
-	xor %r8, %r8  
+	movq %rax, %rdi
+		
+	call what_to_do #get handler response
+		
 	cmp %rax, %r8  #cmp handler response to 0
-	jne end
+	je old_handler
 	
-	call *old_de_handler #get old handler response
+	movq %rax, (temp_res)
 	
-	end:
+	popfq
+	popq %r11
+	popq %r10
+	popq %r9
+	popq %r8
+	popq %rcx
+	popq %rdx
+	popq %rsi
+	popq %rdi
+	popq %rax
+	
+	movq (temp_res), %rax
+	
+	movq $1, %rbx
+	cqo
+	
+	iretq
+	
+	old_handler:
+
+		popfq
+		popq %r11
+		popq %r10
+		popq %r9
 		popq %r8
+		popq %rcx
+		popq %rdx
+		popq %rsi
 		popq %rdi
+		popq %rax
 	
-		leave
-		ret
-	
-	
+		call *old_de_handler #get old handler response
+		
+		movq $5, %rcx
+		
+		iretq
+		
+
+
