@@ -493,7 +493,7 @@ div_op:
 
 	call calc_rec
 	
-	mov %rax, (temp_res) #temp_res = left
+	mov %rax, (temp_res) #temp_res = right
 
 	#post call
 	popq %r11
@@ -509,32 +509,44 @@ div_op:
 	mov %r9, %rcx  #i=i
 	mov %r10, %rsi #len = len
 	mov %r11, %rax #rax = left
-
+	
 	pushq %rdx
 	pushq %rbx
-	pushq %r8
-
-	xor %rdx, %rdx
-	movq $1, %r8
+	
 	movq (temp_res), %rbx
-DEBUG_DIV:
-	cmp %rdx, %rax
-	jge check_denom
-	imul $-1, %rax, %rax
-	imul $-1, %r8, %r8
-check_denom:
-	cmp %rdx, %rbx
-	jge div_abs
-	imul $-1, %rbx, %rbx
-	imul $-1, %r8, %r8
-div_abs:
-	divq %rbx #rax = left\right
-	mulq %r8
-
-post_div:
-	popq %r8
+	cqo
+	
+	idivq %rbx
+	
 	popq %rbx
 	popq %rdx
+	
+	
+	
+	
+#	pushq %r8
+#
+#	xor %rdx, %rdx
+#	movq $1, %r8
+#	movq (temp_res), %rbx
+#DEBUG_DIV:
+#	cmp %rdx, %rax
+#	jge check_denom
+#	imul $-1, %rax, %rax
+#	imul $-1, %r8, %r8
+#check_denom:
+#	cmp %rdx, %rbx
+#	jge div_abs
+#	imul $-1, %rbx, %rbx
+#	imul $-1, %r8, %r8
+#div_abs:
+#	divq %rbx #rax = left\right
+#	mulq %r8
+#
+#post_div:
+#	popq %r8
+#	popq %rbx
+#	popq %rdx
 
 	#epilogue
 	leave
