@@ -74,7 +74,7 @@ int __init init_ko(void){
 	
 	// Swap to the new IDTR
 	my_load_idt(&new_idtr);
-
+	
 	return 0;
 }
 

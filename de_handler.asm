@@ -65,8 +65,10 @@ my_de_handler:
 		popq %rsi
 		popq %rdi
 		popq %rax
+		
+		#movq (old_de_handler), %rcx
 	
-		call *old_de_handler #get old handler response
+		call (old_de_handler) #get old handler response
 		
 		movq $5, %rcx
 		
