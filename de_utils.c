@@ -60,6 +60,6 @@ unsigned long my_get_gate_offset(gate_desc *gate) {
 	);
 	return addr;
 	
-	return gate_offset(gate);
+	//return gate_offset(gate);
 // </STUDENT FILL>
 }

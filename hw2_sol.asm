@@ -150,32 +150,9 @@ calc_rec: #rdi = *str, rsi = len
 			pushq %r10
 			pushq %r11
 
-			#movq $1, %rax
-			#movq %rsi, %rdx
-			#movq %rdi, %r8
-			#sub  %rsi, %r8
-			#movq %r8, %rsi
-			#inc %rsi
-			#movq $1, %rdi
-
-			#syscall
-
-
-
-
-
 			jmp create_string
 			
 		use_string_convert:	
-
-			#movq $1, %rax
-			#movq %rsi, %rdx
-			#movq $1, %rdi
-			#movq $string_to_convert, %rsi
-
-			#syscall
-			
-			
 
 			movq $string_to_convert, %rdi	
 
@@ -521,33 +498,6 @@ div_op:
 	popq %rbx
 	popq %rdx
 	
-	
-	
-	
-#	pushq %r8
-#
-#	xor %rdx, %rdx
-#	movq $1, %r8
-#	movq (temp_res), %rbx
-#DEBUG_DIV:
-#	cmp %rdx, %rax
-#	jge check_denom
-#	imul $-1, %rax, %rax
-#	imul $-1, %r8, %r8
-#check_denom:
-#	cmp %rdx, %rbx
-#	jge div_abs
-#	imul $-1, %rbx, %rbx
-#	imul $-1, %r8, %r8
-#div_abs:
-#	divq %rbx #rax = left\right
-#	mulq %r8
-#
-#post_div:
-#	popq %r8
-#	popq %rbx
-#	popq %rdx
-
 	#epilogue
 	leave
 	ret
