@@ -12,7 +12,7 @@
 my_de_handler:
   #STUDENT NEED TO FILL
   
-	
+	pushfq
 	pushq %rax
 	pushq %rdi
 	pushq %rsi
@@ -22,7 +22,7 @@ my_de_handler:
 	pushq %r9
 	pushq %r10
 	pushq %r11
-	pushfq
+	
 	
 	xor %r8, %r8
 	
@@ -35,7 +35,7 @@ my_de_handler:
 	
 	movq %rax, (temp_res)
 	
-	popfq
+	
 	popq %r11
 	popq %r10
 	popq %r9
@@ -45,6 +45,7 @@ my_de_handler:
 	popq %rsi
 	popq %rdi
 	popq %rax
+	popfq
 	
 	movq (temp_res), %rax
 	
@@ -55,7 +56,7 @@ my_de_handler:
 	
 	old_handler:
 
-		popfq
+		
 		popq %r11
 		popq %r10
 		popq %r9
@@ -65,14 +66,9 @@ my_de_handler:
 		popq %rsi
 		popq %rdi
 		popq %rax
+		popfq
 		
-		#movq (old_de_handler), %rcx
-	
-		call (old_de_handler) #get old handler response
-		
-		movq $5, %rcx
-		
-		iretq
+		jmp *old_de_handler #get old handler response
 		
 
 
